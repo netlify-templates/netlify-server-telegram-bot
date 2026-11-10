@@ -1,4 +1,4 @@
-# A personal assistant on Netlify Server
+# Netlify Server-based Telegram Bot
 
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/netlify-templates/netlify-server-telegram-bot)
 
@@ -102,3 +102,7 @@ The server itself is `netlify/server/index.ts`, a Hono app on one small instance
 - [Netlify Server docs](https://docs.netlify.com/build/server/): the platform's documentation.
 - `docs/checks.md`: what we measured on the platform.
 - `docs/console-api.md`: the console's API.
+
+## License
+
+MIT, see [LICENSE](LICENSE).

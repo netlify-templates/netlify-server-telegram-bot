@@ -2,6 +2,7 @@
   "name": "netlify-server-minimal-assistant",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "A minimal personal assistant on Netlify Server: Telegram and a web console, Claude through the AI Gateway, memory and schedules on Netlify Database.",
   "scripts": {
