@@ -50,8 +50,6 @@ Before you connect Telegram, reminders and reports show up in the console, and a
 - There's a daily spending cap, $2 by default, which you can change in Settings. Before each model call and each search, the assistant sets aside the most that call could cost, and if that would pass the cap, it doesn't make the call. Close to the cap, it answers without the web. A scheduled job that hits the cap waits for the next day.
 - The cap can be passed only by usage the API doesn't report back, or by a large PDF read in one go (the limit on page size doesn't cover PDFs).
 
-For a sense of scale, a day of testing on Nov 9, 2026 (14 messages, most of them with web searches, plus a few reminders) cost $0.57 on Sonnet 5.5. [Netlify Server and Database costs TBD]
-
 ## How it works
 
 This part is for anyone curious about what happens under the hood. The site's How it works page (`/how-it-works`) covers the same ground, with a diagram. There are a few parts to this repo:
@@ -82,14 +80,14 @@ The server itself is `netlify/server/index.ts`, a Hono app on one small instance
 - Pages are read with Anthropic's hosted fetch. It only opens addresses that you wrote or that came back from a search, it doesn't run JavaScript, and some sites refuse it (for example, because of their `robots.txt`).
 - Search goes through OpenRouter's Exa engine on the AI Gateway. Without it, the assistant falls back to Anthropic's hosted search, which is worse at finding a site's own pages (see check 6 in `docs/checks.md`).
 - Every message is answered at least once. In rare cases, like a crash while sending, a reply can arrive twice, and then the second one says it's a resend.
-- The wake function's query every minute keeps Netlify Database's compute from suspending. [Keep it, or move the check to Netlify Blobs? TBD]
+- The wake function queries the database every minute, so Netlify Database's compute never suspends. That keeps the first reply after a quiet stretch fast, but it also means the database runs around the clock. If that matters for your bill, you can have the server write the next time anything is due to a small marker in Netlify Blobs, have the wake function read only that each minute, and keep a database check every 15 minutes or so as a safety net.
 - It's built for one person.
 
 ## Changing it
 
 - A tool is one file in `src/tools/`, exporting a read tool or a change tool (see `src/tools/types.ts`), and listed in `src/tools/index.ts`. Change tools run through the queue, so they're recorded, safe to retry, and turned into proposals after outside text, without extra work in the tool.
 - A channel has to verify each request first, map the sender to the owner, and send only through the outbox. `src/channels/telegram.ts` is the example to follow.
-- [Recipes (a Netlify tool, voice notes, Slack and others) and an AGENTS.md: TBD]
+- `AGENTS.md` has more on extending it, for you or a coding agent, including the rules every change has to keep.
 
 ## Running it locally, and tests
 
