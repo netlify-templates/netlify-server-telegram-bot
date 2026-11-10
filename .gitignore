@@ -1,0 +1,20 @@
+# Dependencies and the Netlify CLI's local state
+node_modules
+.netlify
+
+# Local secrets
+.env*
+
+# Local working notes and reference code, kept out of the repo
+notes/
+reference/
+
+# Test and editor leftovers
+coverage
+*.log
+
+# Codex review snapshots
+.codex-snapshots
+
+# Local preview config
+.claude/

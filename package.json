@@ -1,0 +1,31 @@
+{
+  "name": "netlify-server-minimal-assistant",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A minimal personal assistant on Netlify Server: Telegram and a web console, Claude through the AI Gateway, memory and schedules on Netlify Database.",
+  "scripts": {
+    "typecheck": "tsc",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
+    "@netlify/database": "^2.0.3",
+    "@netlify/functions": "^6.1.1",
+    "@netlify/server": "^0.1.6",
+    "drizzle-orm": "^1.0.0-beta.22",
+    "hono": "^4.13.17",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^1.0.0-beta.22",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}

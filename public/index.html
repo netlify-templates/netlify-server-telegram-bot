@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Netlify Server Telegram Bot</title>
+    <link rel="stylesheet" href="/app.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <!-- Sign-in. app.js shows either this or the console below. -->
+    <main id="signin" class="signin" hidden>
+      <h1>Netlify Server Telegram Bot</h1>
+      <div id="not-configured" class="card" hidden>
+        <h2>The console needs a password</h2>
+        <p id="not-configured-reason">Set <code>CONSOLE_PASSWORD</code> to at least 16 characters in the project's environment variables, then redeploy.</p>
+        <p>The easiest way is to ask an Agent Run. Start one on this project in the Netlify UI, and give it this prompt:</p>
+        <p id="agent-prompt" class="prompt">Generate a secure password for this project's console. Show it to me and help me set it as an environment variable named CONSOLE_PASSWORD, marked as secret. Remind me to save the password somewhere safe, and to publish the changes!</p>
+        <div class="row"><button id="copy-prompt" class="small" type="button">Copy prompt</button></div>
+      </div>
+      <form id="signin-form" class="stack">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" required />
+        <button id="signin-button" class="primary" type="submit">Sign in</button>
+        <p id="signin-error" class="error" role="alert" hidden></p>
+      </form>
+      <p class="muted small"><a href="/how-it-works">How it works</a></p>
+    </main>
+
+    <div id="app" hidden>
+      <header class="top">
+        <div class="wrap">
+          <div class="brand">
+            <h1>Assistant</h1>
+            <div class="row"><a href="/how-it-works">How it works</a> <button id="signout" class="link" type="button">Sign out</button></div>
+          </div>
+          <nav aria-label="Sections">
+            <a href="#chat">Chat</a>
+            <a href="#memory">Memory</a>
+            <a href="#schedules">Schedules</a>
+            <a href="#status">Status</a>
+            <a href="#settings">Settings</a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="wrap">
+        <section id="tab-chat" class="tab" aria-labelledby="chat-title">
+          <h2 id="chat-title" class="visually-hidden">Chat</h2>
+          <div class="chat-tools">
+            <a id="telegram-hint" class="hint" href="#status" hidden>Connect Telegram to get reminders and reports on your phone</a>
+            <button id="notify" class="link small" type="button" hidden>Notify me</button>
+          </div>
+          <div id="proposals"></div>
+          <button id="older" class="link" type="button" hidden>Show earlier messages</button>
+          <ol id="log" class="log" aria-live="polite"></ol>
+          <p id="chat-empty" class="empty" hidden>No messages yet. Tell the assistant a bit about yourself and where you're based, or ask what it can do.</p>
+          <form id="composer" class="composer">
+            <p id="photo-chip" class="photo-chip" hidden>
+              <span id="photo-name"></span>
+              <button id="photo-remove" class="link small" type="button">Remove photo</button>
+            </p>
+            <label for="text" class="visually-hidden">Message</label>
+            <textarea id="text" rows="1" placeholder="Message"></textarea>
+            <label class="btn">Photo<input id="photo" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,image/gif" /></label>
+            <button id="send" class="primary" type="submit">Send</button>
+            <p id="chat-error" class="error" role="alert" hidden></p>
+          </form>
+        </section>
+
+        <section id="tab-memory" class="tab" hidden>
+          <div class="head">
+            <h2>Memory</h2>
+            <span id="memory-usage" class="muted small"></span>
+          </div>
+          <div class="bar" aria-hidden="true"><span id="memory-bar"></span></div>
+          <p class="muted intro">Short notes the assistant keeps about you and uses in every reply. Each note holds up to 400 characters.</p>
+          <form id="note-form" class="stack">
+            <label for="note-new">New note</label>
+            <textarea id="note-new" rows="2" maxlength="400" required></textarea>
+            <div class="row"><button class="primary" type="submit">Add note</button></div>
+          </form>
+          <p id="memory-error" class="error" role="alert" hidden></p>
+          <ul id="notes" class="list"></ul>
+        </section>
+
+        <section id="tab-schedules" class="tab" hidden>
+          <div class="head">
+            <h2>Schedules</h2>
+            <span id="schedules-count" class="muted small"></span>
+          </div>
+          <p id="schedules-error" class="error" role="alert" hidden></p>
+          <ul id="schedule-list" class="list"></ul>
+          <h3>Start from a template</h3>
+          <div id="templates" class="list"></div>
+        </section>
+
+        <section id="tab-status" class="tab" hidden>
+          <div class="head">
+            <h2>Status</h2>
+            <button id="status-refresh" class="small" type="button">Refresh</button>
+          </div>
+          <p id="status-error" class="error" role="alert" hidden></p>
+          <p id="status-note" class="muted" role="status"></p>
+          <div id="status-cards" class="list"></div>
+        </section>
+
+        <section id="tab-settings" class="tab" hidden>
+          <h2>Settings</h2>
+          <form id="settings-form" class="stack">
+            <label for="tz">Time zone</label>
+            <input id="tz" list="tz-list" autocomplete="off" spellcheck="false" required />
+            <datalist id="tz-list"></datalist>
+            <p id="tz-hint" class="muted small"></p>
+
+            <label for="model">Model</label>
+            <select id="model"></select>
+
+            <label for="cap">Daily spending cap in US dollars</label>
+            <input id="cap" type="number" min="0" step="0.5" inputmode="decimal" required />
+
+            <fieldset>
+              <legend>Persona</legend>
+              <div id="presets" class="stack"></div>
+            </fieldset>
+
+            <label for="persona-name">Name <span class="muted">(optional)</span></label>
+            <input id="persona-name" autocomplete="off" />
+
+            <label for="soul">Personality <span class="muted">(optional)</span></label>
+            <textarea id="soul" rows="5" aria-describedby="soul-help"></textarea>
+            <p id="soul-help" class="muted small">How the assistant talks and what it cares about. Leave it empty to use the persona's own.</p>
+
+            <div class="row"><button class="primary" type="submit">Save settings</button> <span id="settings-saved" class="muted" role="status"></span></div>
+            <p id="settings-error" class="error" role="alert" hidden></p>
+          </form>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

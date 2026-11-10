@@ -1,0 +1,8 @@
+# The assistant is a Netlify Server (netlify/server/index.ts) plus two functions.
+# There's nothing to build: Netlify bundles the server and functions itself.
+[build]
+  command = "echo 'Nothing to build'"
+  publish = "public"
+
+[dev]
+  framework = "#static"

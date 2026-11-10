@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>How it works - Netlify Server Telegram Bot</title>
+    <meta name="description" content="How a personal AI assistant runs on Netlify Server, Netlify Database and the AI Gateway." />
+    <link rel="stylesheet" href="/app.css" />
+    <style>
+      .home { color: var(--text); font-weight: 600; text-decoration: none; }
+      .doc { padding-bottom: 4rem; }
+      .doc h1 { font-size: 1.75rem; margin: 1.5rem 0 0.75rem; }
+      .doc h2 { font-size: 1.25rem; margin: 2.25rem 0 0.5rem; }
+      .doc p, .doc li { line-height: 1.6; }
+      .doc li + li { margin-top: 0.375rem; }
+      .doc code { font-size: 0.9em; overflow-wrap: anywhere; }
+      .lede { font-size: 1.0625rem; }
+      .diagram { margin: 1.25rem 0 0.5rem; padding: 12px; overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+      .diagram svg { display: block; width: 100%; min-width: 560px; height: auto; }
+      .diagram text { font-family: var(--font); fill: var(--text); }
+      .diagram .title { font-size: 14px; font-weight: 600; }
+      .diagram .sub, .diagram .label { font-size: 12px; fill: var(--muted); }
+      .diagram .box { fill: var(--surface); stroke: var(--border); }
+      .diagram .server { fill: var(--sunken); stroke: var(--accent); stroke-width: 1.5; }
+      .diagram .line { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+      .diagram .head { fill: var(--muted); }
+      .caption { margin: 0 0 1rem; }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <div class="brand" style="padding-bottom: 0.75rem">
+          <a class="home" href="/">Netlify Server Telegram Bot</a>
+          <a class="small" href="/">Back to the console</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap doc">
+      <h1>How it works</h1>
+      <p class="lede">This site runs a personal AI assistant on Netlify Server. Its owner talks to it on Telegram or in the console on this site, and it remembers things about them, sends reminders, watches pages for changes and searches the web. This page explains how it's built, for anyone thinking about deploying their own or changing it.</p>
+
+      <h2>The parts</h2>
+      <p>Everything runs on Netlify, with no AI API keys to manage:</p>
+      <ul>
+        <li><strong>Netlify Server</strong> runs the assistant. It's a Hono app on one small instance, with Telegram's webhook, the console's API, a run queue and the agent loop.</li>
+        <li><strong>Netlify Database</strong> (Postgres) keeps the memory, schedules and conversation history, and also every message, run and reply on its way through.</li>
+        <li><strong>The AI Gateway</strong> provides Claude and web search.</li>
+        <li><strong>A scheduled function</strong> wakes the server up when something is due.</li>
+      </ul>
+
+      <figure class="diagram" style="margin-left: 0; margin-right: 0">
+        <svg viewBox="0 0 720 390" role="img" aria-labelledby="diagram-title diagram-desc">
+          <title id="diagram-title">The parts of the assistant</title>
+          <desc id="diagram-desc">Telegram and the console talk to Netlify Server, which has a Telegram webhook, a console API, a run queue and an agent loop. The server reads and writes Netlify Database at every step and calls Claude through the AI Gateway. A scheduled function checks the database every minute and wakes the server when something is due.</desc>
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path class="head" d="M0,0 L10,5 L0,10 z" />
+            </marker>
+          </defs>
+
+          <!-- Where the owner is -->
+          <rect class="box" x="10" y="50" width="120" height="56" rx="10" />
+          <text class="title" x="70" y="74" text-anchor="middle">Telegram</text>
+          <text class="sub" x="70" y="93" text-anchor="middle">on your phone</text>
+          <rect class="box" x="10" y="130" width="120" height="56" rx="10" />
+          <text class="title" x="70" y="154" text-anchor="middle">Console</text>
+          <text class="sub" x="70" y="173" text-anchor="middle">on this site</text>
+
+          <!-- The server -->
+          <rect class="server" x="230" y="30" width="240" height="245" rx="12" />
+          <text class="title" x="350" y="54" text-anchor="middle">Netlify Server</text>
+          <rect class="box" x="250" y="70" width="200" height="40" rx="8" />
+          <text class="title" x="350" y="95" text-anchor="middle">Telegram webhook</text>
+          <rect class="box" x="250" y="120" width="200" height="40" rx="8" />
+          <text class="title" x="350" y="145" text-anchor="middle">Console API</text>
+          <rect class="box" x="250" y="170" width="200" height="40" rx="8" />
+          <text class="title" x="350" y="195" text-anchor="middle">Run queue <tspan class="sub">(leases, outbox)</tspan></text>
+          <rect class="box" x="250" y="220" width="200" height="40" rx="8" />
+          <text class="title" x="350" y="245" text-anchor="middle">Agent loop <tspan class="sub">(Claude, tools)</tspan></text>
+
+          <!-- The database and the gateway -->
+          <rect class="box" x="550" y="60" width="140" height="140" rx="10" />
+          <text class="title" x="620" y="86" text-anchor="middle">Netlify Database</text>
+          <text class="sub" x="620" y="104" text-anchor="middle">Postgres</text>
+          <text class="sub" x="620" y="130" text-anchor="middle">messages, runs</text>
+          <text class="sub" x="620" y="148" text-anchor="middle">outbox, notes</text>
+          <text class="sub" x="620" y="166" text-anchor="middle">schedules</text>
+          <text class="sub" x="620" y="184" text-anchor="middle">spend</text>
+          <rect class="box" x="550" y="215" width="140" height="56" rx="10" />
+          <text class="title" x="620" y="239" text-anchor="middle">AI Gateway</text>
+          <text class="sub" x="620" y="258" text-anchor="middle">Claude, web search</text>
+
+          <!-- The wake function -->
+          <rect class="box" x="230" y="320" width="240" height="56" rx="10" />
+          <text class="title" x="350" y="344" text-anchor="middle">Scheduled function</text>
+          <text class="sub" x="350" y="363" text-anchor="middle">every minute</text>
+
+          <!-- Arrows -->
+          <line class="line" x1="130" y1="78" x2="250" y2="90" marker-start="url(#arrow)" marker-end="url(#arrow)" />
+          <text class="label" x="180" y="70" text-anchor="middle">messages</text>
+          <line class="line" x1="130" y1="158" x2="250" y2="140" marker-start="url(#arrow)" marker-end="url(#arrow)" />
+          <text class="label" x="180" y="172" text-anchor="middle">chat, settings</text>
+          <line class="line" x1="470" y1="130" x2="550" y2="130" marker-start="url(#arrow)" marker-end="url(#arrow)" />
+          <text class="label" x="510" y="122" text-anchor="middle">every step</text>
+          <line class="line" x1="470" y1="241" x2="550" y2="241" marker-end="url(#arrow)" />
+          <text class="label" x="510" y="233" text-anchor="middle">model calls</text>
+          <line class="line" x1="350" y1="320" x2="350" y2="277" marker-end="url(#arrow)" />
+          <text class="label" x="358" y="303">wakes it up</text>
+          <polyline class="line" points="470,348 705,348 705,130 692,130" marker-end="url(#arrow)" />
+          <text class="label" x="590" y="340" text-anchor="middle">anything due?</text>
+        </svg>
+      </figure>
+      <p class="caption muted small">The server keeps nothing that matters in memory. Everything it needs to pick up where it left off is in the database.</p>
+
+      <h2>The life of a message</h2>
+      <ol>
+        <li>Telegram sends your message to the server's webhook. The server saves it in the database together with the run that will answer it, in one transaction, and only then tells Telegram it got it. A message from the console goes into the same queue.</li>
+        <li>The run starts the agent loop. Claude gets the conversation so far and your notes, and can call tools (memory, schedules, web search, reading a page) for up to 10 rounds.</li>
+        <li>Before each model call and each search, the assistant sets aside the most that call could cost, so it stays under the daily spending cap. It settles the real cost afterward.</li>
+        <li>The reply goes into an outbox in the database, and from there to Telegram. In the console, it streams into the page as it's written.</li>
+      </ol>
+
+      <h2>Deploys, crashes and idle stops</h2>
+      <p>A server instance can go away at any point: a new deploy replaces it, it crashes, or it stops after being idle for a few minutes. The run queue in <code>src/queue.ts</code> makes sure every message still gets an answer:</p>
+      <ul>
+        <li>A run holds a lease that it renews every 30 seconds. If its instance dies, another instance picks the run up after the lease runs out (90 seconds).</li>
+        <li>Whatever a run already did, like saving a note or creating a schedule, is recorded, so a retry doesn't do it again.</li>
+        <li>If a reply might have gone out already, the retry says so.</li>
+        <li>When a new deploy goes live, the old instance stops taking new work right away, and gets 60 seconds to finish what it's running.</li>
+      </ul>
+      <p>We tested each of these on the platform: killing the instance mid-run, deploying mid-run, streaming through a deploy, schedules on an idle server, and answering from cold. On a cold start, a Telegram message was recorded 1 second after it was sent. The details are in <code>docs/checks.md</code> in the repo.</p>
+
+      <h2>Waking up for schedules</h2>
+      <p>Only a request starts a server that has stopped. So a scheduled function (<code>netlify/functions/wake.mts</code>) runs every minute, checks the database for anything due, and calls the server only when there's work. That way the server can stop when it's idle and still send your 8:00 brief.</p>
+
+      <h2>Safety</h2>
+      <ul>
+        <li>It has one owner. Telegram pairs only through a one-time link from the console, and the console needs the password, with failed attempts throttled.</li>
+        <li>The assistant can't act in the world beyond messaging its owner, remembering things and scheduling.</li>
+        <li>Text from the web or from a forwarded message can't change anything on its own. Once a run has read such text, changes to notes, schedules or the persona become proposals, which the owner confirms with a button. Scheduled jobs can read and report, but never change anything.</li>
+        <li>Only the published production deploy acts. An old deploy's permalink or a deploy preview gets a 409, instead of touching the data or sending messages.</li>
+        <li>No tool reads environment variables or files, so the tokens and the password never reach the model.</li>
+      </ul>
+
+      <h2>What it costs</h2>
+      <p>The model is Claude Sonnet 5.5 by default, and a web search costs about $0.007. There's a daily spending cap, $2 by default, which the owner can change in Settings. [Netlify Server and Database costs TBD]</p>
+
+      <h2>Deploy your own</h2>
+      <p><a href="https://app.netlify.com/start/deploy?repository=https://github.com/netlify-templates/netlify-server-telegram-bot"><img src="https://www.netlify.com/img/deploy/button.svg" alt="Deploy to Netlify" width="146" height="32" /></a></p>
+      <p>The code is on GitHub, at <a href="https://github.com/netlify-templates/netlify-server-telegram-bot">netlify-templates/netlify-server-telegram-bot</a>. Its README has the setup steps: deploy, set the console password (an Agent Run can help with that), and connect a Telegram bot. For the platform itself, see the <a href="https://docs.netlify.com/build/server/">Netlify Server docs</a>.</p>
+    </main>
+  </body>
+</html>
